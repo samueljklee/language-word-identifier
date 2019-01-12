@@ -1,24 +1,25 @@
 # Author: Samuel Lee @ samueljklee@gmail.com
-# 
+#
 # The goal of this program is to use the knowledge of n-grams to implement a language identification tool.
 # Currently it supports 4 languages: English, Malay, Dutch, Swedish
 # The reason for these languages are because of familiarity for EN and MS, DE and SV has similar language structure
 # (phonemes, letters used etc), I did noticed there are some issues of underfitting if not enough training are given and
-# bigram is used. 
+# bigram is used.
 #
 # The current specifications of this program is by using Trigram and Quadgram as a combination to get the highest match
-# between the trained models and the test set (string). 
+# between the trained models and the test set (string).
 #
 # Reference: https://appliedmachinelearning.blog/2017/04/30/language-identification-from-texts-using-bi-gram-model-pythonnltk/
-# 
+#
 
 
 from nltk.collocations import BigramCollocationFinder, TrigramCollocationFinder, QuadgramCollocationFinder, BigramAssocMeasures
 import re
 import os
+import math
 import numpy as np
 import string
-import argparse 
+import argparse
 
 global DEBUG
 DEBUG = False
@@ -39,7 +40,7 @@ def filter_words(training_path, words):
             words.append(row)
             words.append(' ')
 
-# Training language models 
+# Training language models
 def train_language(language, training_path):
     words = []
     filter_words(training_path, words)
@@ -55,7 +56,7 @@ def train_language(language, training_path):
     trigram_finder.apply_freq_filter(FREQ_FILTER)
     trigram_model = trigram_finder.ngram_fd.items()
 
-    # Quad 
+    # Quad
     quadgram_finder = QuadgramCollocationFinder.from_words(seq)
     quadgram_finder.apply_freq_filter(FREQ_FILTER)
     quadgram_model = quadgram_finder.ngram_fd.items()
@@ -63,7 +64,7 @@ def train_language(language, training_path):
     bigram_model = sorted(bigram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
     trigram_model = sorted(trigram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
     quadgram_model = sorted(quadgram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
-    
+   
     final_model = trigram_model + quadgram_model
 
     np.save(MODELS_PATH+language+'.npy', final_model)
@@ -72,18 +73,18 @@ def train_language(language, training_path):
 # Process model to store the result
 def analyze_model():
     all_models = os.listdir(MODELS_PATH)
-    language_model = [] 
+    language_model = []
 
     for model_file in all_models:
         language_name = re.findall(r'^[a-zA-Z]+', model_file)
         language_data = []
-        
+       
         model = np.load(MODELS_PATH+model_file)
         print("Language:{}\t Number of n-gram: {} ".format(language_name, len(model)))
 
         language_model.append((model_file, model, len(model)))
 
-    return language_model 
+    return language_model
 
 
 def predict(test_string, models):
@@ -91,10 +92,10 @@ def predict(test_string, models):
     test_string = pre_processing(test_string)
 
     bi_test = BigramCollocationFinder.from_words(test_string)
-    tri_test = TrigramCollocationFinder.from_words(test_string) 
-    quad_test = QuadgramCollocationFinder.from_words(test_string) 
+    tri_test = TrigramCollocationFinder.from_words(test_string)
+    quad_test = QuadgramCollocationFinder.from_words(test_string)
     final_test = list(tri_test.ngram_fd.items()) + list(quad_test.ngram_fd.items())
-    
+   
     model_name = []
 
     for model in models:
@@ -110,7 +111,7 @@ def predict(test_string, models):
                 total_ngram = lang_model[2]
                 if k == ngram:
                     if DEBUG: print("Found", k, v, lang, total_ngram)
-                    # normalizing to prevent freq/total to be zero 
+                    # normalizing to prevent freq/total to be zero
                     freq_sum[i] = freq_sum[i] + (freq*10000)/total_ngram
                     exist = 1
                     break
@@ -121,14 +122,26 @@ def predict(test_string, models):
         max_val = freq_sum.max()
         index = freq_sum.argmax()
 
-    _max = 0
-    _name = ""
-    if DEBUG: print(list(zip(model_name, freq_sum)))
-    for m,f in list(zip(model_name, freq_sum)):
-        if f>_max:
-            _name, _max = m, f
+    if not max(freq_sum):
+        if DEBUG: print("[ERROR] Invalid string. String: {}".format(test_string))
+        return 0, "Hmm, I do not know this word. Please try other words."
 
-    return _name.split('.')[0], _max
+    # get highest score and normalize it to be between 0,1}
+    _max = 0
+    freq_to_model = list(zip(freq_sum, model_name))
+    scores = [x for x, y in freq_to_model]
+    normalized_scores_name = [ (normalize_score(f, scores), m) for f, m in freq_to_model ]
+    sorted_score_model = sorted(normalized_scores_name, reverse=True)
+   
+    if DEBUG: print("[DEBUG] Frequency to model: {}".format(freq_to_model))
+    if DEBUG: print("[DEBUG] Scores: {}".format(scores))
+    if DEBUG: print("[DEBUG] Normalized scores name: {}".format(normalized_scores_name))
+    if DEBUG: print("[DEBUG] Reverse sorted score model: {}".format(sorted_score_model))
+
+    return 1, sorted_score_model
+
+def normalize_score(x, score):
+    return (x-min(score))/(max(score) - min(score))
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Identify language of given string")
@@ -157,7 +170,7 @@ if __name__ == "__main__":
     args = parse_arguments()
 
     if args.mode == "train":
-        pair_lang_train_path = get_filepath(args.input) 
+        pair_lang_train_path = get_filepath(args.input)
         for lang, train_path in pair_lang_train_path:
             print("Training language {}".format(lang))
             train_language(lang, train_path)
@@ -173,10 +186,19 @@ if __name__ == "__main__":
             input_string = input("What to predict? ")
             if input_string == "DONE":
                 break
-            else: 
-                prediction, score = predict(input_string, models) 
-                score = re.findall(r'^[0-9]+.[0-9]{2}', str(score)) 
-            print('Predicting: {}\t[Guessed: {}][Prediction score: {}]'.format(input_string, prediction, score[0]))
-        
+            else:
+                status, predicted_model = predict(input_string, models)
+                if status:
+                    top_score = re.findall(r'[0-9]+.[0-9]{1,2}', str(predicted_model[0][0]))
+                    top_name = re.findall(r'^[a-z]+', str(predicted_model[0][1]))
+                    second_score = re.findall(r'[0-9]+.[0-9]{1,2}', str(predicted_model[1][0]))
+                    second_name = re.findall(r'^[a-z]+', str(predicted_model[1][1]))
+                else:
+                    print(predicted_model)
+                    continue
+
+            print('Predicting: {}\t[Guessed: {}, Score: {}][Possible: {}, Score: {}]'.format(
+                input_string, top_name[0], top_score[0], second_name[0], second_score[0]))
         print("Goodbye.")
-   
+
+
