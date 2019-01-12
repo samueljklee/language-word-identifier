@@ -29,13 +29,13 @@ Language:['sv']  Number of n-gram: 5791
 Language:['en']  Number of n-gram: 5704
 Predicting words (type DONE to quit):
 What to predict? > Hello World
-Predicting: Hello World [Guessed: en][Prediction score: 38.03]
+Predicting: Hello World [Guessed: en, Score: 1.0][Possible: sv, Score: 0.49]
 What to predict? > Apa khabar
-Predicting: Apa khabar  [Guessed: ms][Prediction score: 35.89]
+Predicting: Apa khabar  [Guessed: ms, Score: 1.0][Possible: sv, Score: 0.19]
 What to predict? > Gute Nacht
-Predicting: Gute Nacht  [Guessed: de][Prediction score: 35.06]
+Predicting: Gute Nacht  [Guessed: de, Score: 1.0][Possible: en, Score: 0.50]
 What to predict? > Vad heter du?
-Predicting: Vad heter du?       [Guessed: sv][Prediction score: 48.62]
+Predicting: Vad heter du?       [Guessed: sv, Score: 1.0][Possible: en, Score: 0.25]
 What to predict? > DONE
 Goodbye.
 ```

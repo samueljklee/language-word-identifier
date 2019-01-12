@@ -183,7 +183,7 @@ if __name__ == "__main__":
         models = analyze_model()
         print("Predicting words (type DONE to quit):")
         while True:
-            input_string = input("What to predict? ")
+            input_string = input("What to predict? > ")
             if input_string == "DONE":
                 break
             else:
