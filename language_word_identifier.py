@@ -93,8 +93,7 @@ def predict(test_string, models):
     bi_test = BigramCollocationFinder.from_words(test_string)
     tri_test = TrigramCollocationFinder.from_words(test_string) 
     quad_test = QuadgramCollocationFinder.from_words(test_string) 
-    #bi_tri_test = list(bi_test.ngram_fd.items()) + list(tri_test.ngram_fd.items())
-    bi_tri_test = list(tri_test.ngram_fd.items()) + list(quad_test.ngram_fd.items())
+    final_test = list(tri_test.ngram_fd.items()) + list(quad_test.ngram_fd.items())
     
     model_name = []
 
@@ -102,7 +101,7 @@ def predict(test_string, models):
         model_name.append(model[0])
 
     freq_sum = np.zeros(len(models))
-    for ngram, freq in bi_tri_test:
+    for ngram, freq in final_test:
         exists = 0
 
         for i, lang_model in enumerate(models):
@@ -110,7 +109,7 @@ def predict(test_string, models):
             for k, v in lang_model[1]:
                 total_ngram = lang_model[2]
                 if k == ngram:
-                    #print("Found", k, v, lang, total_ngram)
+                    if DEBUG: print("Found", k, v, lang, total_ngram)
                     # normalizing to prevent freq/total to be zero 
                     freq_sum[i] = freq_sum[i] + (freq*10000)/total_ngram
                     exist = 1
@@ -119,7 +118,6 @@ def predict(test_string, models):
             if not exists:
                 freq_sum[i] += 1
 
-    
         max_val = freq_sum.max()
         index = freq_sum.argmax()
 
@@ -157,7 +155,6 @@ def get_filepath(path):
 
 if __name__ == "__main__":
     args = parse_arguments()
-
 
     if args.mode == "train":
         pair_lang_train_path = get_filepath(args.input) 
