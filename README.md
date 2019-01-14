@@ -14,12 +14,12 @@ number of unique tri- and quad- grams of around 4500 - 7000.
 
 How to run:
 - To train the language model:
-`python language_word_identifier.py train -i training`
--Training sets should be saved in the `training` folder with the format of `[lang]_`
+`python language_word_identifier.py train -i training`  
+Training sets should be saved in the `training` folder with the format of `[lang]_`
 
 - To make predictions:
-`python language_word_identifier.py predict [-d]`
-- `-d` flag is to show debugging messages
+`python language_word_identifier.py predict [-d]`  
+`-d` flag is to show debugging messages
 
 Example output:
 ```
