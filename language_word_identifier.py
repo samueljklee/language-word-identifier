@@ -1,13 +1,14 @@
 # Author: Samuel Lee @ samueljklee@gmail.com
 #
 # The goal of this program is to use the knowledge of n-grams to implement a language identification tool.
-# Currently it supports 4 languages: English, Malay, Dutch, Swedish
-# The reason for these languages are because of familiarity for EN and MS, DE and SV has similar language structure
-# (phonemes, letters used etc), I did noticed there are some issues of underfitting if not enough training are given and
+# Currently it supports 5 languages: English, Malay, Dutch, Swedish, Spanish
+# The reason for these languages is because of familiarity for EN and MS, DE and SV has similar language structure
+# (phonemes, letters used etc), and ES because it's widely used in the USA. I did noticed there are some issues of underfitting if not enough training are given and
 # bigram is used.
 #
 # The current specifications of this program is by using Trigram and Quadgram as a combination to get the highest match
-# between the trained models and the test set (string).
+# between the trained models and the test set (string). Each language are trained with around 250000 words, resulting the
+# number of unique tri- and quad- grams of around 4500 - 7000.
 #
 # Reference: https://appliedmachinelearning.blog/2017/04/30/language-identification-from-texts-using-bi-gram-model-pythonnltk/
 #
