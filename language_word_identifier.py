@@ -66,7 +66,7 @@ def train_language(language, training_path):
     trigram_model = sorted(trigram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
     quadgram_model = sorted(quadgram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
    
-    final_model = trigram_model + quadgram_model
+    final_model = bigram_model + trigram_model + quadgram_model
 
     np.save(MODELS_PATH+language+'.npy', final_model)
     print("Language model for {} stored at {}".format(language, MODELS_PATH+language+'.npy'))
@@ -95,7 +95,7 @@ def predict(test_string, models):
     bi_test = BigramCollocationFinder.from_words(test_string)
     tri_test = TrigramCollocationFinder.from_words(test_string)
     quad_test = QuadgramCollocationFinder.from_words(test_string)
-    final_test = list(tri_test.ngram_fd.items()) + list(quad_test.ngram_fd.items())
+    final_test = list(bi_test.ngram_fd.items()) + list(tri_test.ngram_fd.items()) + list(quad_test.ngram_fd.items())
    
     model_name = []
 
