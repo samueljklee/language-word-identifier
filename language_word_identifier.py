@@ -15,6 +15,7 @@
 
 
 from nltk.collocations import BigramCollocationFinder, TrigramCollocationFinder, QuadgramCollocationFinder, BigramAssocMeasures
+from nltk import ngrams, NgramAssocMeasures
 import re
 import os
 import math
@@ -26,7 +27,7 @@ global DEBUG
 DEBUG = False
 MODELS_PATH = "models/"
 TRAIN_PATH = "training/"
-FREQ_FILTER = 15
+FREQ_FILTER = 1
 
 # Remove anything that is not lowercase and uppercase letters
 def pre_processing(line):
@@ -37,7 +38,7 @@ def pre_processing(line):
 def filter_words(training_path, words):
     with open(training_path, 'r') as fpr:
         for i, row in enumerate(fpr):
-            row = pre_processing(row)
+            row = pre_processing(row.strip())
             words.append(row)
             words.append(' ')
 
@@ -45,7 +46,7 @@ def filter_words(training_path, words):
 def train_language(language, training_path):
     words = []
     filter_words(training_path, words)
-    seq = ''.join(words)
+    seq = ' ' + ''.join(words)
 
     # Bigram
     bigram_finder = BigramCollocationFinder.from_words(seq)
@@ -65,9 +66,10 @@ def train_language(language, training_path):
     bigram_model = sorted(bigram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
     trigram_model = sorted(trigram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
     quadgram_model = sorted(quadgram_finder.ngram_fd.items(), key=lambda item: item[1], reverse=True)
+    
    
     final_model = bigram_model + trigram_model + quadgram_model
-
+    #print(final_model)
     np.save(MODELS_PATH+language+'.npy', final_model)
     print("Language model for {} stored at {}".format(language, MODELS_PATH+language+'.npy'))
 
@@ -80,10 +82,14 @@ def analyze_model():
         language_name = re.findall(r'^[a-zA-Z]+', model_file)
         language_data = []
        
+        model_dict = dict()
         model = np.load(MODELS_PATH+model_file)
         print("Language:{}\t Number of n-gram: {} ".format(language_name, len(model)))
 
-        language_model.append((model_file, model, len(model)))
+        for item in model:
+            if item[0] not in model_dict: model_dict[item[0]] = item[1]
+
+        language_model.append((model_file, model_dict, len(model)))
 
     return language_model
 
@@ -108,14 +114,14 @@ def predict(test_string, models):
 
         for i, lang_model in enumerate(models):
             lang = lang_model[0]
-            for k, v in lang_model[1]:
-                total_ngram = lang_model[2]
-                if k == ngram:
-                    if DEBUG: print("Found", k, v, lang, total_ngram)
-                    # normalizing to prevent freq/total to be zero
-                    freq_sum[i] = freq_sum[i] + (freq*10000)/total_ngram
-                    exist = 1
-                    break
+            model = lang_model[1]
+            total_ngram = lang_model[2]
+            
+            if ngram in model:
+                if DEBUG: print("Found", ngram, model[ngram], lang, total_ngram)
+                # normalizing to prevent freq/total to be zero
+                freq_sum[i] = freq_sum[i] + (freq*10000)/total_ngram
+                exist = 1
 
             if not exists:
                 freq_sum[i] += 1
